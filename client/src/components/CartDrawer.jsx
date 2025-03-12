@@ -6,13 +6,17 @@ import {
   removeFromCart,
   decreaseQuantity,
 } from "../features/cart/cartSlice";
-import { useNavigate } from "react-router";
+
 import { loadStripe } from "@stripe/stripe-js";
+import { useState } from "react";
 
 const CartDrawer = () => {
   const dispatch = useDispatch();
   const { isOpen, items } = useSelector((state) => state.cart);
-  const navigate = useNavigate();
+  const [userEmail, setUserEmail] = useState("");
+
+  const submitBtnIsDisabled =
+    items.length === 0 || !userEmail || !userEmail.includes("@");
 
   const total = items.reduce(
     (sum, item) => sum + item.price * item.quantity,
@@ -20,30 +24,66 @@ const CartDrawer = () => {
   );
 
   const handleCheckout = async () => {
-    dispatch(toggleCart());
     console.log("cart-items:", items);
+    console.log(
+      "VITE_STRIPE_PUBLIC_KEY:",
+      import.meta.env.VITE_PUBLIC_STRIPE_PUBLIC_KEY
+    );
+    console.log("VITE_BACKEND_URL:", import.meta.env.VITE_PUBLIC_BACKEND_URL);
+    console.log("userEmail:", userEmail);
+
+    const placeOrderFn = async () => {
+      const response = await fetch(
+        `${import.meta.env.VITE_PUBLIC_BACKEND_URL}/api/order`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ items, email: userEmail }),
+        }
+      );
+      const data = await response.json();
+      return data;
+    };
+
+    const placedOrderResData = await placeOrderFn();
+    localStorage.setItem(
+      "placedOrderResData",
+      JSON.stringify(placedOrderResData)
+    );
+
     const stripe = await loadStripe(
-      "sk_test_51R1W7B2EJ5gYJt8V1L0Ix6fC0mPBrj0UR1x1LcIGzsGWw9Va38EbEpXwzkFOK4Rj7zAz8zmKzNLlQfN9fqi2wqEK00v7JnDmUR"
+      import.meta.env.VITE_PUBLIC_STRIPE_PUBLIC_KEY
     );
     const headers = {
       "Content-Type": "application/json",
     };
     const response = await fetch(
-      "http://localhost:4000/api/create-checkout-session",
+      `${import.meta.env.VITE_PUBLIC_BACKEND_URL}/api/create-checkout-session`,
       {
         method: "POST",
         headers,
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, email: userEmail }),
       }
     );
+
+    // =========================================================
     const session = await response.json();
+    console.log("session.session:", session.session);
+    console.log("session.payment_intent:", session.payment_intent);
+
+    // await new Promise((resolve) => setTimeout(resolve, 30000));
+
     const result = await stripe.redirectToCheckout({
       sessionId: session.id,
+      // successUrl: `${window.location.origin}/ordersuccessfull?session_id=${session.id}`,
     });
+    console.log("result:", result);
+
     if (result.error) {
-      console.log(result.error);
+      return console.log(result.error);
     }
-    // navigate("/checkout");
   };
 
   if (!isOpen) return null;
@@ -106,7 +146,7 @@ const CartDrawer = () => {
                         <div className="flex items-center border rounded">
                           <button
                             onClick={() => dispatch(decreaseQuantity(item.id))}
-                            className="px-2 py-1 hover:bg-gray-100"
+                            className="px-2 py-1 hover:bg-pink-50 cursor-pointer"
                             // disabled={item.quantity <= 1}
                           >
                             -
@@ -114,7 +154,7 @@ const CartDrawer = () => {
                           <span className="px-2">{item.quantity}</span>
                           <button
                             onClick={() => dispatch(addToCart(item))}
-                            className="px-2 py-1 hover:bg-gray-100"
+                            className="px-2 py-1 hover:bg-emerald-50 cursor-pointer"
                           >
                             +
                           </button>
@@ -134,9 +174,18 @@ const CartDrawer = () => {
               <span>Total:</span>
               <span>${total.toFixed(2)}</span>
             </div>
+
+            <input
+              value={userEmail}
+              type="email"
+              placeholder="Enter your email"
+              className="w-full p-2 border rounded mb-2"
+              onChange={(e) => setUserEmail(e.target.value?.trim())}
+              required
+            />
             <button
               className="w-full cursor-pointer disabled:cursor-not-allowed bg-indigo-600 disabled:bg-gray-300 hover:bg-indigo-700 text-white py-2 px-4 rounded-md"
-              disabled={items.length === 0}
+              disabled={submitBtnIsDisabled}
               onClick={handleCheckout}
             >
               Checkout

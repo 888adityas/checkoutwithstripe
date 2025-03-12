@@ -3,18 +3,20 @@ import { BrowserRouter as Router, Routes, Route } from "react-router";
 import Header from "./components/Header";
 import CartDrawer from "./components/CartDrawer";
 import HomePage from "./pages/HomePage";
-// Import your other components here
+import CancelPage from "./pages/CancelPage";
+import SuccessPage from "./pages/SuccessPage";
 
 function App() {
   return (
     <Router>
       <div className="min-h-screen flex flex-col">
         <Header />
-        <CartDrawer /> {/* Add the CartDrawer here */}
+        <CartDrawer />
         <main className="flex-1">
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            {/* Other routes */}
+            <Route index path="/" element={<HomePage />} />
+            <Route path="/ordercancelled" element={<CancelPage />} />
+            <Route path="/ordersuccessfull" element={<SuccessPage />} />
           </Routes>
         </main>
       </div>

@@ -14,7 +14,10 @@ const Header = () => {
     <header className="bg-indigo-100 backdrop-blur-sm shadow-lg py-2 px-6 sticky top-0 z-10 border-b border-indigo-100">
       <div className="container mx-auto flex justify-between items-center">
         <Link to="/" className="group flex items-center gap-2">
-          <span className="text-2xl font-extrabold text-indigo-600 tracking-tight">
+          <span
+            title="home"
+            className="text-2xl font-extrabold text-indigo-600 tracking-tight"
+          >
             Tech Store
           </span>
         </Link>
