@@ -69,13 +69,13 @@ mern-ecommerce
 1. Start the server:
    ```
    cd server
-   node index.js
+   npm run dev
    ```
 
 2. Start the client:
    ```
    cd client
-   npm start
+   npm run dev
    ```
 
 The application should now be running on `http://localhost:3000`.
